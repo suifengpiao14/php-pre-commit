@@ -40,6 +40,8 @@ allownonascii=$(git config --bool hooks.allownonascii)
 # Redirect output to stderr.
 exec 1>&2
 
+# ignore some folder and file
+file_filter=":*.php :(exclude)vendor :(exclude)*blade.php :(exclude)_ide_helper.php :(exclude)twig.php"
 # Cross platform projects tend to avoid non-ASCII filenames; prevent
 # them from being added to the repository. We exploit the fact that the
 # printable range starts at the space character and ends with tilde.
@@ -47,7 +49,7 @@ if [ "$allownonascii" != "true" ] &&
     # Note that the use of brackets around a tr range is ok here, (it's
     # even required, for portability to Solaris 10's /usr/bin/tr), since
     # the square bracket bytes happen to fall in the designated range.
-    test $(git diff --cached --name-only --diff-filter=A -z $against |
+    test $(git diff --cached --name-only --diff-filter=A -z $against $file_filter |
       LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
 then
     cat <<\EOF
@@ -153,7 +155,7 @@ declare -a errors
 
 # Fetch all changed php files and validate them.
 # This will check only staged files to be commited.
-files=$(git diff --cached --name-only --diff-filter=ACM $against | grep '\.php$' | grep -Ev '\.(blade.php|txt)$' | grep -Ev '(_ide_helper.php)$'|grep -v vendor )
+files=$(git diff --cached --name-only --diff-filter=ACM $against $file_filter )
 
 # Project Folder.
 project=$(git rev-parse --show-toplevel)
@@ -161,7 +163,7 @@ project=$(git rev-parse --show-toplevel)
 # Apenas caminhos e nomes dos arquivos: /path/file.php,/foo/file.php,/bar/file.php
 for relative_file_path in $files
 do
-    staged_files="$staged_files $(git rev-parse --show-toplevel)/$relative_file_path"
+    staged_files="$staged_files $project/$relative_file_path"
     # file_name=$(basename "$relative_file_path")
     # file_entension=${file_name##*.}
 done
@@ -251,7 +253,7 @@ if [ -n "$files" ]; then
     fi
 
     # Arguments both for use for PHPCS and for PHPCBF.
-    php_cs_cfb_common_arguments="--standard=PSR2 --colors --error-severity=1 --ignore='*blade.php*,*twig.php*' --tab-width=4 --encoding=utf-8 --extensions=php -d memory_limit=32M -n"
+    php_cs_cfb_common_arguments="--standard=PSR2 --colors --error-severity=1 --ignore='*blade.php*,*twig.php*,*vendor*' --tab-width=4 --encoding=utf-8 --extensions=php -d memory_limit=32M -n"
 
     # Only PHPCS exclusives arguments.
     phpcs_arguments="-s --report=full --report-width=auto"
@@ -330,7 +332,7 @@ if [ -n "$files" ]; then
     echo "${color_bold_yellow}✔︎ Output Format: Text(default)${color_reset}"
     echo
 
-    git status --porcelain | grep -e '^[AM]\(.*\).php$' | cut -c 3- | while read line; do
+    git status --porcelain $file_filter | grep -e '^[AM]\(.*\).php$' | cut -c 3- | while read line; do
         # php-cs-fixer CHECK.
         # --dry-run (The --dry-run option displays the files that need to be fixed but without actually modifying them).
         php_cs_fixer_codestyle_dry_run=`php-cs-fixer --dry-run --diff --verbose --using-cache=no --rules=@PSR2,@Symfony fix ${line} 2>&1 | grep "diff"`
@@ -362,7 +364,11 @@ if [ -n "$files" ]; then
     fi
 
     # @see https://phpmd.org/rules/index.html
-    phpmd_rules="cleancode,codesize,controversial,design,naming,unusedcode"
+    # exclude rule cleancode,
+    #phpmd_rules="codesize,controversial,design,naming,unusedcode"
+    # use customer rule file
+    phpmd_rules="./phpmd.xml"
+
 
     echo "✔︎ Report Format: ${color_bold_yellow}text${color_reset}"
     echo "✔︎ Ruleset Files: ${color_bold_yellow}${phpmd_rules}${color_reset}"
@@ -372,7 +378,7 @@ if [ -n "$files" ]; then
     message_info "PHPMD - PHP Mess Detector: [ ${staged_files_separated_by_comma} ]"
 
     # PHPMD running script
-    phpmd_output=$(phpmd ${staged_files_separated_by_comma} text "${phpmd_rules}" --suffixes php)
+    phpmd_output=$(phpmd ${staged_files_separated_by_comma} text "${phpmd_rules}"  --exclude vendor --suffixes php)
     phpmd_retval=$?
 
     if [ $phpmd_retval -ne 0 ]; then

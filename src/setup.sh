@@ -8,6 +8,7 @@ else
 fi
 
 cp ./vendor/suifengpiao14/php-pre-commit/src/pre-commit .git/hooks/pre-commit
+cp ./vendor/suifengpiao14/php-pre-commit/src/phpmd.xml ./phpmd.xml
 chmod +x .git/hooks/pre-commit
 
 if [ "$PRE_COMMIT_EXISTS" = 0 ];
