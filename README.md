@@ -9,7 +9,7 @@ This is a pre commit script that checks added, copied, modified or renamed files
 
 ## Installation
 ```bash
- composer require --dev suifengpiao14/php-pre-commit:dev-master .
+ composer require --dev suifengpiao14/php-pre-commit:dev-master 
  ```
  Or alternatively, include a dependency for smgladkovskiy/phpcs-git-pre-commit in your composer.json file manually:
 ```json
