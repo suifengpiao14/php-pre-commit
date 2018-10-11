@@ -143,6 +143,147 @@ function message_info() {
     echo "${color_bold_black}${color_background_blue} ☝️️  $1 ${color_reset}\n"
 }
 
+
+function get_phpcs_bin(){
+    # PHP CodeSniffer default execution file.
+    #
+    # curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+    phpcs_local_bin="phpcs.phar"
+
+    # Default command to run PHP CodeSniffer.
+    phpcs_bin="php $phpcs_local_bin"
+
+    # Default command via install local project package with Composer (Depot Manager for PHP).
+    phpcs_vendor_bin="vendor/bin/phpcs"
+
+    # Standard command via composer global installation.
+    phpcs_global_bin="phpcs"
+    # Verifying command default based on existing conditions.
+    if [ -f "$phpcs_vendor_bin" ]; then
+        echo  $phpcs_vendor_bin
+		return 0
+    fi
+
+    if hash phpcs 2>/dev/null; then
+        echo $phpcs_global_bin
+		return 0
+    fi
+
+    if [ -f "$phpcs_local_exec" ]; then
+        echo "php $phpcs_local_bin"
+		return 0
+	fi
+
+    message_warning "No valid PHP Codesniffer executable found! Please have one available as either $phpcs_vendor_bin, $phpcs_global_bin or $phpcs_local_exec"
+    exit 1
+}
+
+function get_phpcbf_bin(){
+    # PHP CodeSniffer default execution file.
+    #
+    # curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+    phpcbf_local_bin="phpcbf.phar"
+
+    # Default command to run PHP CodeSniffer.
+    phpcbf_bin="php $phpcbf_local_bin"
+
+    # Default command via install local project package with Composer (Depot Manager for PHP).
+    phpcbf_vendor_bin="vendor/bin/phpcbf"
+
+    # Standard command via composer global installation.
+    phpcbf_global_bin="phpcbf"
+    # Verifying command default based on existing conditions.
+    if [ -f "$phpcbf_vendor_bin" ]; then
+        echo $phpcbf_vendor_bin
+		return 0
+    fi
+
+    if hash phpcbf 2>/dev/null; then
+        echo $phpcbf_global_bin
+		return 0
+    fi
+
+    if [ -f "$phpcbf_local_exec" ]; then
+        echo "php $phpcbf_local_bin"
+		return 0
+	fi
+
+    message_warning "No valid PHP Code Beautifier executable found! Please have one available as either [phpcbf]."
+	message_info "Visit: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Fixing-Errors-Automatically"
+    exit 1
+}
+
+function get_phpmd_bin(){
+    # PHP CodeSniffer default execution file.
+    #
+    # curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+    phpmd_local_bin="phpmd.phar"
+
+    # Default command to run PHP CodeSniffer.
+    phpmd_bin="php $phpmd_local_bin"
+
+    # Default command via install local project package with Composer (Depot Manager for PHP).
+    phpmd_vendor_bin="vendor/bin/phpmd"
+
+    # Standard command via composer global installation.
+    phpmd_global_bin="phpmd"
+    # Verifying command default based on existing conditions.
+    if [ -f "$phpmd_vendor_bin" ]; then
+        echo $phpmd_vendor_bin
+		return 0
+    fi
+
+    if hash phpmd 2>/dev/null; then
+        echo $phpmd_global_bin
+		return 0
+    fi
+
+    if [ -f "$phpmd_local_exec" ]; then
+        echo "php $phpmd_local_bin"
+		return 0
+	fi
+
+    message_warning "No valid PHP Mess Detector executable found! Please have one available as either ✖✖✖ phpmd ✖✖✖"
+	message_info "Visit: https://phpmd.org/download/index.html"
+    exit 1
+}
+function get_phpcpd_bin(){
+    # PHP CodeSniffer default execution file.
+    #
+    # curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+    phpcpd_local_bin="phpcpd.phar"
+
+    # Default command to run PHP CodeSniffer.
+    phpcpd_bin="php $phpcpd_local_bin"
+
+    # Default command via install local project package with Composer (Depot Manager for PHP).
+    phpcpd_vendor_bin="vendor/bin/phpcpd"
+
+    # Standard command via composer global installation.
+    phpcpd_global_bin="phpcpd"
+    # Verifying command default based on existing conditions.
+    if [ -f "$phpcpd_vendor_bin" ]; then
+        echo $phpcpd_vendor_bin
+		return 0
+    fi
+
+    if hash phpcpd 2>/dev/null; then
+        echo $phpcpd_global_bin
+		return 0
+    fi
+
+    if [ -f "$phpcpd_local_exec" ]; then
+        echo "php $phpcpd_local_bin"
+		return 0
+	fi
+
+    message_warning "No valid PHP Copy/Paste Detector executable found! Please have one available as either ✖✖✖ phpcpd ✖✖✖"
+	echo "${color_bold_white}Please install phpcpd, e.g.:${color_reset}"
+	echo "${color_bold_green}composer global require --dev 'sebastian/phpcpd=*'${color_reset}"
+    exit 1
+}
+
+
 ######################
 # Checking PHP Project
 ######################
@@ -219,38 +360,11 @@ if [ -n "$files" ]; then
     # PHP CodeSniffer default execution file.
     #
     # curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
-    phpcs_local_bin="phpcs.phar"
+    phpcs_bin=$(get_phpcs_bin)
+	phpcbf_bin=$(get_phpcbf_bin)
 
-    # Default command to run PHP CodeSniffer.
-    phpcs_bin="php $phpcs_local_bin"
+	
 
-    # Default command via install local project package with Composer (Depot Manager for PHP).
-    phpcs_vendor_bin="vendor/bin/phpcs"
-
-    # Standard command via composer global installation.
-    phpcs_global_bin="phpcs"
-
-    # Verifying command default based on existing conditions.
-    if [ -f "$phpcs_vendor_bin" ]; then
-        phpcs_bin=$phpcs_vendor_bin
-    else
-        if hash phpcs 2>/dev/null; then
-            phpcs_bin=$phpcs_global_bin
-        else
-            if [ -f "$phpcs_local_exec" ]; then
-                phpcs_bin=$phpcs_bin
-            else
-                message_warning "No valid PHP Codesniffer executable found! Please have one available as either $phpcs_vendor_bin, $phpcs_global_bin or $phpcs_local_exec"
-                exit 1
-            fi
-        fi
-    fi
-
-    if ! hash phpcbf 2>/dev/null; then
-        message_warning "No valid PHP Code Beautifier executable found! Please have one available as either [phpcbf]."
-        message_info "Visit: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Fixing-Errors-Automatically"
-        exit 1
-    fi
 
     # Arguments both for use for PHPCS and for PHPCBF.
     php_cs_cfb_common_arguments="--standard=PSR2 --colors --error-severity=1 --ignore='*blade.php*,*twig.php*,*vendor*' --tab-width=4 --encoding=utf-8 --extensions=php -d memory_limit=32M -n"
@@ -280,7 +394,7 @@ if [ -n "$files" ]; then
 
         # Run PHP Code Beautifier and Fixer the file.
         # Begin PHP Code Beautifier and Fixer.
-        phpcbf_output="$(phpcbf $php_cs_cfb_common_arguments $file)"
+        phpcbf_output="$($phpcbf_bin $php_cs_cfb_common_arguments $file)"
 
         if [ -n "$phpcbf_output" ]; then
             # File had some issues but they were automatically fixed.
@@ -357,11 +471,7 @@ if [ -n "$files" ]; then
     echo "╰──────────────────────────────────────────╯"
     echo
 
-    if ! hash phpmd 2>/dev/null; then
-        message_warning "No valid PHP Mess Detector executable found! Please have one available as either ✖✖✖ phpmd ✖✖✖"
-        message_info "Visit: https://phpmd.org/download/index.html"
-        exit 1
-    fi
+    phpmd_bin=$(get_phpmd_bin)
 
     # @see https://phpmd.org/rules/index.html
     # exclude rule cleancode,
@@ -378,7 +488,7 @@ if [ -n "$files" ]; then
     message_info "PHPMD - PHP Mess Detector: [ ${staged_files_separated_by_comma} ]"
 
     # PHPMD running script
-    phpmd_output=$(phpmd ${staged_files_separated_by_comma} text "${phpmd_rules}"  --exclude vendor --suffixes php)
+    phpmd_output=$(${phpmd_bin} ${staged_files_separated_by_comma} text "${phpmd_rules}"  --exclude vendor --suffixes php)
     phpmd_retval=$?
 
     if [ $phpmd_retval -ne 0 ]; then
@@ -413,7 +523,8 @@ if [ -n "$files" ]; then
 
     # PHPCPD running script
     phpcpd_tmp=/tmp/t$$
-    phpcpd ${phpcpd_arguments} ${staged_files_separated_by_spaces} > $phpcpd_tmp
+	phpcpd_bin=${get_phpcpd_bin}
+    ${phpcpd_bin} ${phpcpd_arguments} ${staged_files_separated_by_spaces} > $phpcpd_tmp
 
     if grep -q 'Found' $phpcpd_tmp
     then
